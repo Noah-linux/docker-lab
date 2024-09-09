@@ -5,8 +5,8 @@ pipeline {
         string(name: 'ProjectKey', defaultValue: 'petclinic', description: 'SonarQube project key')
         string(name: 'ProjectName', defaultValue: 'petclinic', description: 'SonarQube project name')
         string(name: 'SonarHostUrl', defaultValue: 'http://192.168.201.13:9000', description: 'SonarQube server URL')
-        string(name: 'SlackChannel', defaultValue: '#jenkins-build-sonar', description: 'Slack channel to send notifications')
-        string(name: 'SlackTokenCredentialId', defaultValue: 'SLACK-TOKEN', description: 'Slack token credential ID')
+       //string(name: 'SlackChannel', defaultValue: '#jenkins-build-sonar', description: 'Slack channel to send notifications')
+       //string(name: 'SlackTokenCredentialId', defaultValue: 'SLACK-TOKEN', description: 'Slack token credential ID')
     }
 
     stages {
@@ -65,14 +65,14 @@ pipeline {
             }
         }
 
-        always {
-            slackSend (
-                channel: params.SlackChannel, // Use the parameterized Slack channel
-                color: 'good', // or 'danger' based on the build status
-                tokenCredentialId: params.SlackTokenCredentialId, // Use the parameterized Slack token
-                message: "Pipeline Status: ${currentBuild.currentResult} - ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${BUILD_URL}"
-            )
-        }
+        //always {
+         //   slackSend (
+         //       channel: params.SlackChannel, // Use the parameterized Slack channel
+           //     color: 'good', // or 'danger' based on the build status
+          //      tokenCredentialId: params.SlackTokenCredentialId, // Use the parameterized Slack token
+         //       message: "Pipeline Status: ${currentBuild.currentResult} - ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${BUILD_URL}"
+        //    )
+       // }
 
         cleanup {
             cleanWs() // Clean up workspace
