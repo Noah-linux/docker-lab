@@ -9,6 +9,12 @@ pipeline {
        //string(name: 'SlackTokenCredentialId', defaultValue: 'SLACK-TOKEN', description: 'Slack token credential ID')
     }
 
+        environment {
+        registry = "noaalinux/petclinic-java" // Docker image name
+        registryCredential = 'Jenkins-Docker-Token' // Jenkins credential ID for DockerHub
+        dockerImage = '' // Placeholder for Docker image object
+        dockerTag = "${env.BUILD_NUMBER}" // Use build number as Docker tag
+
     stages {
         stage('Checkout GitHub Repo') {
             steps {
