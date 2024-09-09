@@ -7,7 +7,7 @@ pipeline {
     }
 
     tools {
-        maven 'maven3.9.9' // Use Maven version 3.9.9
+        maven 'maven' // Use Maven version 3.9.9
         jdk 'java' // Use JDK 8
     }
 
