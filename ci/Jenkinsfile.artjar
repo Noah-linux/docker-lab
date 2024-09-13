@@ -13,7 +13,7 @@ pipeline {
     stages {
         stage('Checkout GitHub Repo') {
             steps {
-                git 'https://github.com/shegerbootcamp/docker-lab.git' // Clone the GitHub repository
+                git 'https://github.com/Noah-linux/docker-lab.git' // Clone the GitHub repository
             }
         }
 
@@ -62,7 +62,7 @@ pipeline {
             steps {
               dir('petclinic-app') { 
                 script {
-                    def artifactoryUrl = 'https://shegerlab2024.jfrog.io/artifactory/petclinic-generic-local/petclinic.jar'
+                    def artifactoryUrl = 'https://ncloud.jfrog.io/artifactory/petclinic-generic-local/petclinic.jar'
                     def localJarPath = 'target/*-SNAPSHOT.jar'
 
                      jf 'rt u ${localJarPath} ${artifactoryUrl}'
@@ -80,14 +80,14 @@ pipeline {
             }
         }
 
-        always {
-            slackSend (
-                channel: params.SlackChannel, // Use the parameterized Slack channel
-                color: (currentBuild.currentResult == 'SUCCESS') ? 'good' : 'danger', // Green on success, red on failure
-                tokenCredentialId: params.SlackTokenCredentialId, // Use the parameterized Slack token
-                message: "Pipeline Status: ${currentBuild.currentResult} - ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${BUILD_URL}"
-            )
-        }
+       // always {
+          //  slackSend (
+               // channel: params.SlackChannel, // Use the parameterized Slack channel
+               // color: (currentBuild.currentResult == 'SUCCESS') ? 'good' : 'danger', // Green on success, red on failure
+               // tokenCredentialId: params.SlackTokenCredentialId, // Use the parameterized Slack token
+              //  message: "Pipeline Status: ${currentBuild.currentResult} - ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${BUILD_URL}"
+          //  )
+      //  }
 
         cleanup {
             cleanWs() // Clean up workspace
