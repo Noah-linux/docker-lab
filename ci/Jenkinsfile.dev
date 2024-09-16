@@ -67,7 +67,7 @@ pipeline {
            // steps {
                // dir('petclinic-app') {
                    // script {
-                        jf 'rt u target petclinic-jar/'
+                       // jf 'rt u target petclinic-jar/'
                   //  }
                // }
           //  }
