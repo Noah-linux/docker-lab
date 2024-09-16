@@ -12,6 +12,11 @@ pipeline {
         //string(name: 'SlackChannel', defaultValue: '#jenkins-build-sonar', description: 'Slack channel to send notifications')
         //string(name: 'SlackTokenCredentialId', defaultValue: 'SLACK-TOKEN', description: 'Slack token credential ID')
         string(name: 'AppPort', defaultValue: '8081', description: 'Port to run the application')
+        choice(name: 'DeployEnvironment', choices: ['QA', 'Production'], description: 'Choose environment to deploy')
+        string(name: 'JFrogURL', defaultValue: 'ncloud.jfrog.io', description: 'JFrog Artifactory URL')
+        string(name: 'RepositoryName', defaultValue: 'petclinic', description: 'Repository name for Docker image') // Parameterize repository name
+        string(name: 'ImageName', defaultValue: 'petclinic', description: 'Docker image name') // Parameterize image name
+    }
     }
 
     environment {
