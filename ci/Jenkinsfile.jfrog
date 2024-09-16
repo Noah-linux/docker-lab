@@ -4,19 +4,19 @@ pipeline {
         jfrog 'jfrog-cli'
     }
     environment {
-        //shegerlab2024.jfrog.io/petclinic
-        DOCKER_IMAGE_NAME = "shegerlab2024.jfrog.io/petclinic/petclinic:1.0.0"
+        //ncloud.jfrog.io/petclinic
+        DOCKER_IMAGE_NAME = "ncloud.jfrog.io/petclinic/petclinic:1.0.0"
     }
 
-    parameters {
+    //parameters {
         
-        string(name: 'SlackChannel', defaultValue: '#jenkins-build-sonar', description: 'Slack channel to send notifications')
-        string(name: 'SlackTokenCredentialId', defaultValue: 'SLACK-TOKEN', description: 'Slack token credential ID')
-    }
+        //string(name: 'SlackChannel', defaultValue: '#jenkins-build-sonar', description: 'Slack channel to send notifications')
+        //string(name: 'SlackTokenCredentialId', defaultValue: 'SLACK-TOKEN', description: 'Slack token credential ID')
+    //}
     stages {
         stage('Clone') {
             steps {
-                git branch: 'master', url: "https://github.com/shegerbootcamp/docker-lab.git"
+                git branch: 'master', url: "https://github.com/Noah-linux/docker-lab.git"
             }
         }
 
@@ -40,7 +40,7 @@ pipeline {
             steps {
               dir('petclinic-app') { 
                 script {
-                    def artifactoryUrl = 'https://shegerlab2024.jfrog.io/artifactory/petclinic-generic-local/petclinic.jar'
+                    def artifactoryUrl = 'https://ncloud.jfrog.io/artifactory/petclinic-generic-local/petclinic.jar'
                     def localJarPath = 'target/*-SNAPSHOT.jar'
 
                      jf 'rt u ${localJarPath} ${artifactoryUrl}'
@@ -94,14 +94,14 @@ pipeline {
             }
         }
 
-        always {
-            slackSend (
-                channel: params.SlackChannel, // Use the parameterized Slack channel
-                color: currentBuild.result == 'SUCCESS' ? 'good' : 'danger', // Adjust color based on build result
-                tokenCredentialId: params.SlackTokenCredentialId, // Use the parameterized Slack token
-                message: "Pipeline Status: ${currentBuild.currentResult} - ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${env.BUILD_URL}"
-            )
-        }
+       // always {
+           // slackSend (
+                //channel: params.SlackChannel, // Use the parameterized Slack channel
+               // color: currentBuild.result == 'SUCCESS' ? 'good' : 'danger', // Adjust color based on build result
+                //tokenCredentialId: params.SlackTokenCredentialId, // Use the parameterized Slack token
+               // message: "Pipeline Status: ${currentBuild.currentResult} - ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${env.BUILD_URL}"
+            //)
+       // }
 
         cleanup {
             cleanWs() // Clean up the workspace
