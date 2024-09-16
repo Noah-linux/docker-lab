@@ -92,7 +92,7 @@ pipeline {
        // stage('Push Docker Image') {
             //steps {
                 //dir('petclinic-app') {
-                    jf "docker push ${DOCKER_IMAGE_NAME}" // Push Docker image to Artifactory
+                   // jf "docker push ${DOCKER_IMAGE_NAME}" // Push Docker image to Artifactory
                 //}
            // }
       //  }
