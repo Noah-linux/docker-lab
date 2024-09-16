@@ -17,7 +17,7 @@ pipeline {
         string(name: 'RepositoryName', defaultValue: 'petclinic', description: 'Repository name for Docker image') // Parameterize repository name
         string(name: 'ImageName', defaultValue: 'petclinic', description: 'Docker image name') // Parameterize image name
     }
-    }
+    
 
     environment {
         DOCKER_IMAGE_NAME = "ncloud.jfrog.io/petclinic/petclinic:${env.BUILD_NUMBER}" // Using build number for Docker image tag
