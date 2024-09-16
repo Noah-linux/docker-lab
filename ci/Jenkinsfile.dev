@@ -141,9 +141,9 @@ pipeline {
         //    )
        // }
 
-        cleanup {
-            cleanWs() // Clean up the workspace
-        }
+        //cleanup {
+           // cleanWs() // Clean up the workspace
+       // }
     }
 
     options {
