@@ -14,7 +14,11 @@ pipeline {
         string(name: 'SlackTokenCredentialId', defaultValue: 'SLACK-TOKEN', description: 'Slack token credential ID')
         string(name: 'AppPort', defaultValue: '8081', description: 'Port to run the application')
         choice(name: 'DeployEnvironment', choices: ['QA', 'Production'], description: 'Choose environment to deploy')
+<<<<<<< Updated upstream
         string(name: 'JFrogURL', defaultValue: 'shegerlab2024.jfrog.io', description: 'JFrog Artifactory URL')
+=======
+        //string(name: 'JFrogURL', defaultValue: 'ncloud.jfrog.io', description: 'JFrog Artifactory URL')
+>>>>>>> Stashed changes
         string(name: 'RepositoryName', defaultValue: 'petclinic', description: 'Repository name for Docker image') // Parameterize repository name
         string(name: 'ImageName', defaultValue: 'petclinic', description: 'Docker image name') // Parameterize image name
     }
@@ -63,15 +67,15 @@ pipeline {
             }
         }
 
-        stage('Upload to Artifactory') {
-            steps {
-                dir('petclinic-app') {
-                    script {
-                        jf 'rt u target petclinic-jar/'
-                    }
-                }
-            }
-        }
+       // stage('Upload to Artifactory') {
+          //  steps {
+               // dir('petclinic-app') {
+                   // script {
+                      //  jf 'rt u target petclinic-jar/'
+                  //  }
+              //  }
+          //  }
+      //  }
 
         stage('Build Docker Image') {
             steps {
@@ -81,21 +85,21 @@ pipeline {
             }
         }
 
-        stage('X-Ray Scan') {
-            steps {
-                dir('petclinic-app') {
-                    jf "docker scan ${DOCKER_IMAGE_NAME}" // Scan Docker image for vulnerabilities
-                }
-            }
-        }
+       // stage('X-Ray Scan') {
+            //steps {
+                //dir('petclinic-app') {
+                    //jf "docker scan ${DOCKER_IMAGE_NAME}" // Scan Docker image for vulnerabilities
+               // }
+          //  }
+      //  }
 
-        stage('Push Docker Image') {
-            steps {
-                dir('petclinic-app') {
-                    jf "docker push ${DOCKER_IMAGE_NAME}" // Push Docker image to Artifactory
-                }
-            }
-        }
+        //stage('Push Docker Image') {
+           // steps {
+                //dir('petclinic-app') {
+                    //jf "docker push ${DOCKER_IMAGE_NAME}" // Push Docker image to Artifactory
+            //    }
+         //   }
+      //  }
 
         stage('Deploy QA | PROD') {
             when {
@@ -114,15 +118,15 @@ pipeline {
             }
         }
         
-        stage('Publish Build Info') {
-            steps {
-                script {
-                    // Publish build info to Artifactory
-                    jf 'rt build-publish'
-                }
-            }
-        }
-    }
+       // stage('Publish Build Info') {
+           //steps {
+                //script {
+                    // Publish build info to Artifactory//
+                  //  jf 'rt build-publish'
+              //  }
+          //  }
+      //  }
+  //  }
 
     post {
         success {
