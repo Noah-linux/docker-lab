@@ -6,21 +6,15 @@ pipeline {
     }
 
     parameters {
-        //string(name: 'ProjectKey', defaultValue: 'petclinic', description: 'SonarQube project key')
-        //string(name: 'ProjectName', defaultValue: 'petclinic', description: 'SonarQube project name')
-        //string(name: 'SonarHostUrl', defaultValue: 'http://192.168.201.13:9000/', description: 'SonarQube server URL')
         string(name: 'AppPort', defaultValue: '8081', description: 'Port to run the application')
         choice(name: 'DeployEnvironment', choices: ['QA', 'Production'], description: 'Choose environment to deploy')
-        string(name: 'NexusURL', defaultValue: 'http://192.168.201.15:8081', description: 'Nexus Repository URL') // CHANGED TO NEXUS
-        string(name: 'RepositoryName', defaultValue: 'petclinic', description: 'Repository name for Docker image') // Parameterize repository name
-        string(name: 'ImageName', defaultValue: 'petclinic', description: 'Docker image name') // Parameterize image name
+        string(name: 'NexusURL', defaultValue: 'http://192.168.201.15', description: 'Nexus Repository URL') // Updated Nexus URL
+        string(name: 'RepositoryName', defaultValue: 'nexus-jenkins-integration', description: 'Repository name for Docker image')
+        string(name: 'ImageName', defaultValue: 'petclinic', description: 'Docker image name')
     }
     
-
     environment {
-        DOCKER_IMAGE_NAME = "petclinic:${env.BUILD_NUMBER}" // Using build number for Docker image tag
-        NEXUS_REPO = "${params.RepositoryName}" // CHANGED TO NEXUS
-        NEXUS_URL = "${params.NexusURL}"       // CHANGED TO NEXUS
+        DOCKER_IMAGE_NAME = "${params.ImageName}:${env.BUILD_NUMBER}" // Using build number for Docker image tag
     }
 
     stages {
@@ -38,40 +32,37 @@ pipeline {
             }
         }
 
-        //stage('Sonar Static Code Analysis') {
-            //steps {
-                //dir('petclinic-app') {
-                    //withCredentials([string(credentialsId: params.SonarTokenCredentialId, variable: 'jenkins-sonar-token')]) {
-                        //sh """
-                        //mvn sonar:sonar \
-                            //-Dsonar.projectKey=${params.ProjectKey} \
-                            //-Dsonar.projectName=${params.ProjectName} \
-                            //-Dsonar.host.url=${params.SonarHostUrl} \
-                            //-Dsonar.login=$SONAR_TOKEN \
-                            //-Dsonar.java.binaries=target/classes
-                        //"""
-                    //}
-                //}
-            //}
-        //}
-
         stage('Build Package') {
             steps {
                 dir('petclinic-app') {
-                    sh 'mvn -Dmaven.test.failure.ignore=true clean package' // Build the package without running tests
+                    sh 'mvn -Dmaven.test.failure.ignore=true clean package' // Build the package
                 }
             }
         }
 
-        stage('Upload to Nexus Repository') { // CHANGED TO NEXUS
+        stage('Upload Artifact to Nexus') {
             steps {
-                dir('petclinic-app') {
-                    withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
-                        sh """
-                        curl -v -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file target/*.jar \
-                        ${NEXUS_URL}/repository/${NEXUS_REPO}/petclinic-${env.BUILD_NUMBER}.jar
-                        """
-                    }
+                script {
+                    def version = '1.0.0' // Define your version
+                    def projectName = 'my-service'
+
+                    nexusArtifactUploader(
+                        nexusVersion: 'nexus3', // Corrected version
+                        protocol: 'http',
+                        nexusUrl: "${params.NexusURL}:8081", // Dynamic Nexus URL
+                        //groupId: 'com.example',
+                        version: version,
+                        repository: "${params.RepositoryName}",
+                        credentialsId: 'Nexus-Cred',
+                        artifacts: [
+                            [
+                                artifactId: projectName,
+                                classifier: '',
+                                file: "my-service-${version}.jar", // Path to the JAR file
+                                type: 'jar'
+                            ]
+                        ]
+                    )
                 }
             }
         }
@@ -84,13 +75,13 @@ pipeline {
             }
         }
 
-        stage('Push Docker Image to Nexus') { // CHANGED TO NEXUS
+        stage('Push Docker Image to Nexus') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
                     sh """
-                    docker login -u ${NEXUS_USER} -p ${NEXUS_PASS} ${NEXUS_URL}
-                    docker tag ${DOCKER_IMAGE_NAME} ${NEXUS_URL}/${NEXUS_REPO}/${DOCKER_IMAGE_NAME}
-                    docker push ${NEXUS_URL}/${NEXUS_REPO}/${DOCKER_IMAGE_NAME}
+                    docker login -u ${NEXUS_USER} -p ${NEXUS_PASS} ${params.NexusURL}:8081
+                    docker tag ${DOCKER_IMAGE_NAME} ${params.NexusURL}:8081/${params.RepositoryName}/${DOCKER_IMAGE_NAME}
+                    docker push ${params.NexusURL}:8081/${params.RepositoryName}/${DOCKER_IMAGE_NAME}
                     """
                 }
             }
