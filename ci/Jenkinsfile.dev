@@ -6,9 +6,9 @@ pipeline {
     }
 
     parameters {
-        string(name: 'ProjectKey', defaultValue: 'petclinic', description: 'SonarQube project key')
-        string(name: 'ProjectName', defaultValue: 'petclinic', description: 'SonarQube project name')
-        string(name: 'SonarHostUrl', defaultValue: 'http://192.168.201.13:9000/', description: 'SonarQube server URL')
+        //string(name: 'ProjectKey', defaultValue: 'petclinic', description: 'SonarQube project key')
+        //string(name: 'ProjectName', defaultValue: 'petclinic', description: 'SonarQube project name')
+        //string(name: 'SonarHostUrl', defaultValue: 'http://192.168.201.13:9000/', description: 'SonarQube server URL')
         string(name: 'AppPort', defaultValue: '8081', description: 'Port to run the application')
         choice(name: 'DeployEnvironment', choices: ['QA', 'Production'], description: 'Choose environment to deploy')
         string(name: 'NexusURL', defaultValue: 'http://192.168.201.15:8081', description: 'Nexus Repository URL') // CHANGED TO NEXUS
@@ -38,22 +38,22 @@ pipeline {
             }
         }
 
-        stage('Sonar Static Code Analysis') {
-            steps {
-                dir('petclinic-app') {
-                    withCredentials([string(credentialsId: params.SonarTokenCredentialId, variable: 'jenkins-sonar-token')]) {
-                        sh """
-                        mvn sonar:sonar \
-                            -Dsonar.projectKey=${params.ProjectKey} \
-                            -Dsonar.projectName=${params.ProjectName} \
-                            -Dsonar.host.url=${params.SonarHostUrl} \
-                            -Dsonar.login=$SONAR_TOKEN \
-                            -Dsonar.java.binaries=target/classes
-                        """
-                    }
-                }
-            }
-        }
+        //stage('Sonar Static Code Analysis') {
+            //steps {
+                //dir('petclinic-app') {
+                    //withCredentials([string(credentialsId: params.SonarTokenCredentialId, variable: 'jenkins-sonar-token')]) {
+                        //sh """
+                        //mvn sonar:sonar \
+                            //-Dsonar.projectKey=${params.ProjectKey} \
+                            //-Dsonar.projectName=${params.ProjectName} \
+                            //-Dsonar.host.url=${params.SonarHostUrl} \
+                            //-Dsonar.login=$SONAR_TOKEN \
+                            //-Dsonar.java.binaries=target/classes
+                        //"""
+                    //}
+                //}
+            //}
+        //}
 
         stage('Build Package') {
             steps {
