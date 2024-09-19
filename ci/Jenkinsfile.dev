@@ -20,7 +20,7 @@ pipeline {
     
 
     environment {
-        DOCKER_IMAGE_NAME = "ncloud.jfrog.io/petclinic/petclinic:${env.BUILD_NUMBER}" // Using build number for Docker image tag
+        DOCKER_IMAGE_NAME = "${params.JFrogURL}/${params.RepositoryName}/${params.ImageName}:${env.BUILD_NUMBER}" // Parameterized repository and image names
     }
 
     stages {
