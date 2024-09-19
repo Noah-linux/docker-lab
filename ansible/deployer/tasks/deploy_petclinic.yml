@@ -1,8 +1,6 @@
-# tasks/deploy_petclinic.yml
-
 ---
-- name: Log in to JFrog Artifactory Docker registry
-  shell: docker login {{ jfrog_url }} --username {{ jfrog_username }} --password {{ jfrog_password }}
+- name: Log in to Nexus Docker registry
+  shell: docker login {{ nexus_url }} --username {{ nexus_username }} --password {{ nexus_password }}
 
 - name: Stop and remove the existing petclinic container if it exists
   docker_container:
@@ -12,7 +10,7 @@
 - name: Pull the latest petclinic Docker image
   docker_image:
     name: "{{ docker_image_name }}"
-    source: pull  # Pull the latest image from the registry
+    source: pull  # Pull the latest image from the Nexus registry
 
 - name: Run petclinic container
   docker_container:
