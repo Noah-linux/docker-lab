@@ -26,7 +26,7 @@ pipeline {
     stages {
         stage('Clone') {
             steps {
-                git branch: 'master', url: "https://github.com/Noah-linux/docker-lab.git"
+                git branch: 'patch-1', url: "https://github.com/Noah-linux/docker-lab.git"
             }
         }
 
