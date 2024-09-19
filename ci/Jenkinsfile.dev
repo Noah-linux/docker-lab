@@ -1,11 +1,26 @@
 pipeline {
     agent any
+    
     tools {
-        jfrog 'jfrog-cli'
+        maven 'maven' // Ensure Maven is installed
     }
+
+    parameters {
+        string(name: 'ProjectKey', defaultValue: 'petclinic', description: 'SonarQube project key')
+        string(name: 'ProjectName', defaultValue: 'petclinic', description: 'SonarQube project name')
+        string(name: 'SonarHostUrl', defaultValue: 'http://192.168.201.13:9000/', description: 'SonarQube server URL')
+        string(name: 'AppPort', defaultValue: '8081', description: 'Port to run the application')
+        choice(name: 'DeployEnvironment', choices: ['QA', 'Production'], description: 'Choose environment to deploy')
+        string(name: 'NexusURL', defaultValue: 'http://192.168.201.15:8081', description: 'Nexus Repository URL') // CHANGED TO NEXUS
+        string(name: 'RepositoryName', defaultValue: 'petclinic', description: 'Repository name for Docker image') // Parameterize repository name
+        string(name: 'ImageName', defaultValue: 'petclinic', description: 'Docker image name') // Parameterize image name
+    }
+    
+
     environment {
-        //ncloud.jfrog.io/petclinic
-        DOCKER_IMAGE_NAME = "ncloud.jfrog.io/petclinic/petclinic:1.0.0"
+        DOCKER_IMAGE_NAME = "petclinic:${env.BUILD_NUMBER}" // Using build number for Docker image tag
+        NEXUS_REPO = "${params.RepositoryName}" // CHANGED TO NEXUS
+        NEXUS_URL = "${params.NexusURL}"       // CHANGED TO NEXUS
     }
 
     stages {
@@ -15,65 +30,86 @@ pipeline {
             }
         }
 
-        stage('Test') {
+        stage('Unit Test') {
             steps {
-                dir('petclinic-app') { // Change directory to 'petclinic-app'
-                    sh 'mvn test' // Unit Test
+                dir('petclinic-app') {
+                    sh 'mvn test' // Run unit tests
+                }
+            }
+        }
+
+        stage('Sonar Static Code Analysis') {
+            steps {
+                dir('petclinic-app') {
+                    withCredentials([string(credentialsId: params.SonarTokenCredentialId, variable: 'jenkins-sonar-token')]) {
+                        sh """
+                        mvn sonar:sonar \
+                            -Dsonar.projectKey=${params.ProjectKey} \
+                            -Dsonar.projectName=${params.ProjectName} \
+                            -Dsonar.host.url=${params.SonarHostUrl} \
+                            -Dsonar.login=$SONAR_TOKEN \
+                            -Dsonar.java.binaries=target/classes
+                        """
+                    }
                 }
             }
         }
 
         stage('Build Package') {
             steps {
-                dir('petclinic-app') { // Change directory to 'petclinic-app'
+                dir('petclinic-app') {
                     sh 'mvn -Dmaven.test.failure.ignore=true clean package' // Build the package without running tests
                 }
             }
         }
 
-        stage('Upload Package To Artifactory') {
+        stage('Upload to Nexus Repository') { // CHANGED TO NEXUS
             steps {
                 dir('petclinic-app') {
-                    script {
-                        def artifactoryUrl = 'https://ncloud.jfrog.io/artifactory/petclinic-generic-local/petclinic.jar'
-                        def localJarPath = 'target/*-SNAPSHOT.jar'
-
-                        // Use double quotes to properly inject the variable values //NEWCHANGED
-                        jf "rt u '${localJarPath}' '${artifactoryUrl}'"  //NEWCHANGED
+                    withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                        sh """
+                        curl -v -u ${NEXUS_USER}:${NEXUS_PASS} --upload-file target/*.jar \
+                        ${NEXUS_URL}/repository/${NEXUS_REPO}/petclinic-${env.BUILD_NUMBER}.jar
+                        """
                     }
                 }
             }
         }
 
-        stage('Build Docker image') {
+        stage('Build Docker Image') {
             steps {
                 script {
-                    docker.build("$DOCKER_IMAGE_NAME", 'petclinic-app')
+                    docker.build("${DOCKER_IMAGE_NAME}", 'petclinic-app')
                 }
             }
         }
 
-        stage('X-ray Scan') {
+        stage('Push Docker Image to Nexus') { // CHANGED TO NEXUS
             steps {
-                dir('petclinic-app/') {
-                    // Scan Docker image for vulnerabilities
-                    jf "docker scan ${DOCKER_IMAGE_NAME}"  //NEWCHANGED
+                withCredentials([usernamePassword(credentialsId: 'nexus-credentials', usernameVariable: 'NEXUS_USER', passwordVariable: 'NEXUS_PASS')]) {
+                    sh """
+                    docker login -u ${NEXUS_USER} -p ${NEXUS_PASS} ${NEXUS_URL}
+                    docker tag ${DOCKER_IMAGE_NAME} ${NEXUS_URL}/${NEXUS_REPO}/${DOCKER_IMAGE_NAME}
+                    docker push ${NEXUS_URL}/${NEXUS_REPO}/${DOCKER_IMAGE_NAME}
+                    """
                 }
             }
         }
 
-        stage('Push Image To Artifactory') {
-            steps {
-                dir('petclinic-app/') {
-                    // Push Docker image to Artifactory
-                    jf "docker push ${DOCKER_IMAGE_NAME}"  //NEWCHANGED
-                }
+        stage('Deploy QA | PROD') {
+            when {
+                expression { params.DeployEnvironment == 'QA' || params.DeployEnvironment == 'Production' }
             }
-        }
-
-        stage('Publish build info') {
             steps {
-                jf 'rt build-publish'
+                script {
+                    def playbook = params.DeployEnvironment == 'QA' ? 'ansible/deployer/deployer_qa.yml' : 'ansible/deployer/deployer_prod.yml'
+
+                    sh """
+                    ansible-playbook -i ansible/deployer/inventory.ini ${playbook} \
+                    --extra-vars "NexusURL=${params.NexusURL} DOCKER_IMAGE_NAME=${DOCKER_IMAGE_NAME} AppPort=${params.AppPort}" \
+                    --vault-password-file ansible/deployer/vault_password.txt
+                    """
+                }
             }
         }
     }
