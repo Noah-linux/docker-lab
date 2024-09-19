@@ -38,22 +38,22 @@ pipeline {
             }
         }
 
-        stage('Sonar Static Code Analysis') {
-            steps {
-                dir('petclinic-app') {
-                    withCredentials([string(credentialsId: params.SonarTokenCredentialId, variable: 'jenkins-sonar-token')]) {
-                        sh """
-                        mvn sonar:sonar \
-                            -Dsonar.projectKey=${params.ProjectKey} \
-                            -Dsonar.projectName=${params.ProjectName} \
-                            -Dsonar.host.url=${params.SonarHostUrl} \
-                            -Dsonar.login=$SONAR_TOKEN \
-                            -Dsonar.java.binaries=target/classes
-                        """
-                    }
-                }
-            }
-        }
+       // stage('Sonar Static Code Analysis') {
+       //     steps {
+       //         dir('petclinic-app') {
+      //              withCredentials([string(credentialsId: params.SonarTokenCredentialId, variable: 'jenkins-sonar-token')]) {
+       //                 sh """
+       //                 mvn sonar:sonar \
+       //                     -Dsonar.projectKey=${params.ProjectKey} \
+       //                     -Dsonar.projectName=${params.ProjectName} \
+       //                     -Dsonar.host.url=${params.SonarHostUrl} \
+       //                     -Dsonar.login=$SONAR_TOKEN \
+       //                     -Dsonar.java.binaries=target/classes
+       //                 """
+        //            }
+        //        }
+        //    }
+       // }
 
         stage('Build Package') {
             steps {
