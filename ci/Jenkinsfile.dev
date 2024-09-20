@@ -50,15 +50,15 @@ pipeline {
                         nexusVersion: 'nexus3', // Corrected version
                         protocol: 'http',
                         nexusUrl: "${params.NexusURL}:8081", // Dynamic Nexus URL
-                        //groupId: 'com.example',
-                        version: version,
+                        groupId: 'org.springframework.samples',
+                        version: 2.2.0.BUILD-SNAPSHOT,
                         repository: "${params.RepositoryName}",
                         credentialsId: 'Nexus-Cred',
                         artifacts: [
                             [
-                                artifactId: projectName,
+                                artifactId: spring-petclinic,
                                 classifier: '',
-                                file: "my-service-${version}.jar", // Path to the JAR file
+                                file: "spring-petclinic-${version}.jar", // Path to the JAR file
                                 type: 'jar'
                             ]
                         ]
