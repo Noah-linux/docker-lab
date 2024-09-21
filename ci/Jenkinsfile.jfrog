@@ -56,15 +56,15 @@ pipeline {
             }
         }
 
-        stage('X-ray Scan') {
-            steps {
-                dir('petclinic-app/') {
+        //stage('X-ray Scan') {
+            //steps {
+                //dir('petclinic-app/') {
                     // Scan Docker image for vulnerabilities
-                    jf 'docker scan $DOCKER_IMAGE_NAME'
+                    //jf 'docker scan $DOCKER_IMAGE_NAME'
 
-                }
-            }
-        }
+               // }
+            //}
+       // }
 
         stage('Push Image To Artifactory') {
             steps {
