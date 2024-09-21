@@ -71,7 +71,7 @@ pipeline {
                 dir('petclinic-app/') {
 
                     // Push image to Artifactory
-                    jf 'docker push $DOCKER_IMAGE_NAME'
+                    jf "docker push ${DOCKER_IMAGE_NAME}"
                 }
             }
         }
