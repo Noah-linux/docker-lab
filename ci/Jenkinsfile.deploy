@@ -1,0 +1,152 @@
+pipeline {
+    agent any
+    
+    tools {
+        jfrog 'jfrog-cli'
+    }
+
+    parameters {
+        string(name: 'ProjectKey', defaultValue: 'petclinic', description: 'SonarQube project key')
+        string(name: 'ProjectName', defaultValue: 'petclinic', description: 'SonarQube project name')
+        string(name: 'SonarHostUrl', defaultValue: 'http://192.168.201.13:9000/', description: 'SonarQube server URL')
+        //string(name: 'SlackChannel', defaultValue: '#jenkins-build-sonar', description: 'Slack channel to send notifications')
+        //string(name: 'SlackTokenCredentialId', defaultValue: 'SLACK-TOKEN', description: 'Slack token credential ID')
+        string(name: 'AppPort', defaultValue: '8081', description: 'Port to run the application')
+        choice(name: 'DeployEnvironment', choices: ['QA', 'Production'], description: 'Choose environment to deploy')
+        string(name: 'JFrogURL', defaultValue: 'ncloud.jfrog.io', description: 'JFrog Artifactory URL')
+        string(name: 'RepositoryName', defaultValue: 'petclinic', description: 'Repository name for Docker image') // Parameterize repository name
+        string(name: 'ImageName', defaultValue: 'petclinic', description: 'Docker image name') // Parameterize image name
+    }
+    
+
+    environment {
+        DOCKER_IMAGE_NAME = "${params.JFrogURL}/${params.RepositoryName}/${params.ImageName}:${env.BUILD_NUMBER}" // Parameterized repository and image names
+    }
+
+    stages {
+        stage('Clone') {
+            steps {
+                git branch: 'master', url: "https://github.com/Noah-linux/docker-lab.git"
+            }
+        }
+
+        stage('Unit Test') {
+            steps {
+                dir('petclinic-app') {
+                    sh 'mvn test' // Run unit tests
+                }
+            }
+        }
+
+       // stage('Sonar Static Code Analysis') {
+       //     steps {
+       //         dir('petclinic-app') {
+      //              withCredentials([string(credentialsId: params.SonarTokenCredentialId, variable: 'jenkins-sonar-token')]) {
+       //                 sh """
+       //                 mvn sonar:sonar \
+       //                     -Dsonar.projectKey=${params.ProjectKey} \
+       //                     -Dsonar.projectName=${params.ProjectName} \
+       //                     -Dsonar.host.url=${params.SonarHostUrl} \
+       //                     -Dsonar.login=$SONAR_TOKEN \
+       //                     -Dsonar.java.binaries=target/classes
+       //                 """
+        //            }
+        //        }
+        //    }
+       // }
+
+        stage('Build Package') {
+            steps {
+                dir('petclinic-app') {
+                    sh 'mvn -Dmaven.test.failure.ignore=true clean package' // Build the package without running tests
+                }
+            }
+        }
+
+        stage('Upload to Artifactory') {
+            steps {
+                dir('petclinic-app') {
+                    script {
+                        jf 'rt u target petclinic-jar/'
+                    }
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    docker.build("${DOCKER_IMAGE_NAME}", 'petclinic-app')
+                }
+            }
+        }
+
+        stage('X-Ray Scan') {
+            steps {
+                dir('petclinic-app') {
+                    jf "docker scan ${DOCKER_IMAGE_NAME}" // Scan Docker image for vulnerabilities
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                dir('petclinic-app') {
+                    jf "docker push ${DOCKER_IMAGE_NAME}" // Push Docker image to Artifactory
+                }
+            }
+        }
+
+        stage('Deploy QA | PROD') {
+            when {
+                expression { params.DeployEnvironment == 'QA' || params.DeployEnvironment == 'Production' }
+            }
+            steps {
+                script {
+                    def playbook = params.DeployEnvironment == 'QA' ? 'ansible/deployer/deployer_qa.yml' : 'ansible/deployer/deployer_prod.yml'
+
+                    sh """
+                    ansible-playbook -i ansible/deployer/inventory.ini ${playbook} \
+                    --extra-vars "JFrogURL=${params.JFrogURL} DOCKER_IMAGE_NAME=${DOCKER_IMAGE_NAME} AppPort=${params.AppPort}" \
+                    --vault-password-file ansible/deployer/vault_password.txt
+                    """
+                }
+            }
+        }
+        
+        stage('Publish Build Info') {
+            steps {
+                script {
+                    // Publish build info to Artifactory
+                    jf 'rt build-publish'
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            dir('petclinic-app') {
+                junit '**/target/surefire-reports/TEST-*.xml' // Archive JUnit test results
+                archiveArtifacts 'target/*.jar' // Archive JAR files
+            }
+        }
+
+        //always {
+           // slackSend (
+            //    channel: params.SlackChannel, // Use the parameterized Slack channel
+            //    color: currentBuild.result == 'SUCCESS' ? 'good' : 'danger', // Adjust color based on build result
+             //   tokenCredentialId: params.SlackTokenCredentialId, // Use the parameterized Slack token
+             //   message: "Pipeline Status: ${currentBuild.currentResult} - ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${env.BUILD_URL}"
+        //    )
+       // }
+
+        cleanup {
+            cleanWs() // Clean up the workspace
+        }
+    }
+
+    options {
+        buildDiscarder(logRotator(daysToKeepStr: '1', numToKeepStr: '3')) // Keep 3 builds for 1 day
+    }
+}
