@@ -91,14 +91,14 @@ pipeline {
             }
         }
 
-        always {
-            slackSend (
-                channel: params.SlackChannel, // Use the parameterized Slack channel
-                color: currentBuild.result == 'SUCCESS' ? 'good' : 'danger', // Adjust color based on build result
-                tokenCredentialId: params.SlackTokenCredentialId, // Use the parameterized Slack token
-                message: "Pipeline Status: ${currentBuild.currentResult} - ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${env.BUILD_URL}"
-            )
-        }
+       // always {
+           // slackSend (
+                //channel: params.SlackChannel, // Use the parameterized Slack channel
+                //color: currentBuild.result == 'SUCCESS' ? 'good' : 'danger', // Adjust color based on build result
+                //tokenCredentialId: params.SlackTokenCredentialId, // Use the parameterized Slack token
+               // message: "Pipeline Status: ${currentBuild.currentResult} - ${env.JOB_NAME} #${env.BUILD_NUMBER} - ${env.BUILD_URL}"
+           // )
+      //  }
 
         cleanup {
             cleanWs() // Clean up the workspace
