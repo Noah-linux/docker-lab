@@ -5,14 +5,14 @@ pipeline {
     }
     environment {
         //shegerlab2024.jfrog.io/petclinic
-        DOCKER_IMAGE_NAME = "shegerlab2024.jfrog.io/petclinic/petclinic:1.0.0"
+        DOCKER_IMAGE_NAME = "shegerlab2024.jfrog.io/petclinic/petclinic:${env.BUILD_NUMBER}"
     }
 
-    parameters {
+    //parameters {
         
-        string(name: 'SlackChannel', defaultValue: '#jenkins-build-sonar', description: 'Slack channel to send notifications')
-        string(name: 'SlackTokenCredentialId', defaultValue: 'SLACK-TOKEN', description: 'Slack token credential ID')
-    }
+        //string(name: 'SlackChannel', defaultValue: '#jenkins-build-sonar', description: 'Slack channel to send notifications')
+        //string(name: 'SlackTokenCredentialId', defaultValue: 'SLACK-TOKEN', description: 'Slack token credential ID')
+   // }
     stages {
         stage('Clone') {
             steps {
@@ -40,7 +40,7 @@ pipeline {
             steps {
               dir('petclinic-app') { 
                 script {
-                    def artifactoryUrl = 'https://shegerlab2024.jfrog.io/artifactory/petclinic-generic-local/petclinic.jar'
+                    def artifactoryUrl = 'https://ncloud.io/artifactory/petclinic-generic-local/petclinic.jar'
                     def localJarPath = 'target/*-SNAPSHOT.jar'
 
                      jf 'rt u ${localJarPath} ${artifactoryUrl}'
