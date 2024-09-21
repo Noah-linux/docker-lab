@@ -40,10 +40,7 @@ pipeline {
             steps {
               dir('petclinic-app') { 
                 script {
-                    def artifactoryUrl = 'https://ncloud.io/artifactory/petclinic-generic-local/petclinic.jar'
-                    def localJarPath = 'target/*-SNAPSHOT.jar'
-
-                     jf 'rt u ${localJarPath} ${artifactoryUrl}'
+                       jf 'rt u target petclinic-jar/'
                 }
               }  
             }
